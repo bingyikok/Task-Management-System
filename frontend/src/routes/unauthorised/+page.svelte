@@ -1,33 +1,33 @@
 <script lang="ts">
-    import { isLoggedIn } from '$lib/stores/states.ts';
-    import { goto } from "$app/navigation";import axios from 'axios';
     import { onMount } from 'svelte';
+    import { isLoggedIn } from '$lib/stores/states';
 
     // Set the logged-in state to false when the user is unauthorized
-    isLoggedIn.set(false);
+    $: isLoggedIn.set(true);
+    let message : string = "";
 
-    onMount(async () => {
-    try {
-        await axios.get('http://localhost:3000/logout/', {
-        headers: { "Content-Type": "application/json"},
-        withCredentials: true  // Send cookies with the request
-      },
-    );
-    } catch (error: any) {
-      return error.response?.data?.message || 'An unexpected error occurred.';
-    }   
+    onMount(() => {
+      const url = new URL(window.location.href);
+      const state = decodeURIComponent(url.search);
+
+      if(state === "?account_disabled") {
+        message = "You account is disabled."
+      }
+
+      if(state === "?unauthorised") {
+        message = "You are unauthorised to view the page."
+      }
+
+      if(state === "?not_admin") {
+        message = "You are no longer an admin."
+      }
     });
-
-    function returnHome() {
-        goto('/'); // Redirect to the home (login) page
-    }
 </script>
 
 <div class="unauthorized-container">
     <h1 class="title">Access Forbidden</h1>
-    <h3 class="subtitle">You are not allowed to access this page.</h3>
-    <p class="message">Please log in to continue.</p>
-    <button class="login-button" on:click={returnHome}>Go to Login Page</button>
+    <h3 class="subtitle">{message}</h3>
+    <p class="message">Please use the navbar to navigate back or logout.</p>
 </div>
 
 <style>
@@ -60,21 +60,6 @@
     font-size: 1.2rem;
     color: #666;
     margin-bottom: 30px;
-  }
-
-  .login-button {
-    padding: 12px 24px;
-    font-size: 1rem;
-    background-color: #007bff;
-    color: #fff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-  }
-
-  .login-button:hover {
-    background-color: #0056b3;
   }
 
   /* Add some responsiveness */

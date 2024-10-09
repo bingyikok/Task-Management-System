@@ -1,69 +1,53 @@
 const connection = require("../config/database");
-let isAdmin = false;
 
-async function checkGroup(username) {
-  const queryExistingUserGroup =
-    "SELECT groupname FROM user_groups WHERE username = ?";
-
+async function checkGroup(username, groupname) {
+  const queryCheckGroup =
+    "SELECT COUNT(*) AS count FROM user_groups WHERE username = ? AND groupname = ?";
   try {
-    const [existingUserGroup] = await connection.query(queryExistingUserGroup, [
+    const [[userIsInGroup]] = await connection.query(queryCheckGroup, [
       username,
+      groupname,
     ]);
-
-    if (existingUserGroup.length < 1) return [];
-
-    else return existingUserGroup;
+    return userIsInGroup.count > 0;
   } catch (error) {
-    res
-      .status(500)
-      .send(`An error occurred while loading checking group of ${username}.`);
+    throw new Error(`${username} cannot be found under ${groupname}.`);
   }
 }
 
 exports.checkIsAdmin = async (req, res, next) => {
   const username = req.username;
-  const groupname = await checkGroup(username);
-  
-  isAdmin = false;
-  
-  if (groupname.length) {
-    isAdmin = groupname.some(
-      (group) => group.groupname.toUpperCase() === "ADMIN"
-    );
+
+  try {
+    const isAdmin = await checkGroup(username, "ADMIN");
+    console.log(username, isAdmin);
+    if (!isAdmin) {
+      return res.status(403).json({
+        success: false,
+        message: "Error: No longer admin",
+        fields: {
+          username: "Error: No longer admin",
+          password: "Error: No longer admin",
+          email: "Error: No longer admin",
+          isActive: "Error: No longer admin",
+          groupname: "Error: No longer admin",
+        },
+      });
+    }
+    next();
+  } catch (error) {
+    res
+      .status(500)
+      .send(`An error occurred while loading checking group of ${username}.`, error.message);
   }
-  console.log(username, isAdmin);
-  if (!isAdmin) {
-    return res.status(403).json({
-      success: false,
-      message: "Error: No longer admin",
-      fields: {
-        username: "Error: No longer admin",
-        password: "Error: No longer admin",
-        email: "Error: No longer admin",
-        isActive: "Error: No longer admin",
-        groupname: "Error: No longer admin",
-      },
-    });
-  }
-  next();
 };
 
-
 exports.checkAccount = async (req, res) => {
-  const username = req.username
-  const groupname = await checkGroup(username);
+  const username = req.username;
   const queryExistingUserAccount =
     "SELECT email, isActive FROM accounts WHERE username = ?";
 
-  isAdmin = false;
-
-  if (groupname.length) {
-    isAdmin = groupname.some(
-      (group) => group.groupname.toUpperCase() === "ADMIN"
-    );
-  }
-
   try {
+    const isAdmin = await checkGroup(username, "ADMIN");
     const [existingUserAccount] = await connection.query(
       queryExistingUserAccount,
       [username]
@@ -73,7 +57,6 @@ exports.checkAccount = async (req, res) => {
       username: username,
       email: existingUserAccount[0].email,
       isActive: existingUserAccount[0].isActive,
-      groupname: groupname,
       isAdmin: isAdmin,
     });
   } catch (error) {

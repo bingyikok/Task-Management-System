@@ -2,7 +2,7 @@
   import axios from 'axios';
   import { onMount } from 'svelte';
   import MultiSelect from 'svelte-multiselect';
-  import Error from '$lib/components/Error.svelte';
+  import Alert from '$lib/components/Alert.svelte';
   import { goto } from "$app/navigation";
   import { page } from '$app/stores';
   import { isLoggedIn, isAdmin } from '$lib/stores/states';
@@ -17,19 +17,28 @@
   let newPassword : string = '';
   let loading : boolean = false;
   let originalGroup: string[] = [];
-  let session: number = $page.data.status;
   let alertMessage: string | null;
 
   $: isLoggedIn.set($page.data.isActive);
   $: isAdmin.set($page.data.isAdmin);
 
   onMount(async () => {
-    if(session === 403 || !$isAdmin || !$isLoggedIn) {goto('/unauthorised')}
-
     loading = true;
+
+    if ($page.data.status === 403) {
+    const message : string = encodeURIComponent("unauthorised");
+      goto(`/unauthorised?${message}`);
+    } else if (!$isAdmin) {
+    const message : string = encodeURIComponent("not_admin");
+      goto(`/unauthorised?${message}`);
+    } else if (!$isLoggedIn) {
+      const message : string = encodeURIComponent("account_disabled");
+      goto(`/unauthorised?${message}`);
+    }
 
     resetAdd();
     resetUpdate();
+    
     try {
       const [responseUser, responseGroups] = await Promise.all([
         axios.get('http://localhost:3000/users', {
@@ -84,6 +93,10 @@
     } catch (error: any) {
       addError = error.response.data.fields || 'An unexpected error occurred.';
       console.log(addError);
+
+      if (error.response.status === 403) {
+        location.reload();
+      }
     } finally {
       resetUpdate();
       editingIndex = null;
@@ -109,6 +122,9 @@
     } catch (error: any) {
       updateError = error.response.data.fields || 'An unexpected error occurred.';
       console.log(addError);
+      if (error.response.status === 403) {
+        location.reload();
+      }
     } finally {
       resetAdd();
     }
@@ -142,6 +158,10 @@
       }
     } catch (error: any) {
       addError.groupname = error.response?.data?.message || 'An unexpected error occurred.';
+
+      if (error.response.status === 403) {
+        location.reload();
+      }
     } finally {
       newGroup = '';
       resetUpdate();
@@ -153,7 +173,7 @@
   }
 </script>
 
-<Error {alertMessage} />
+<Alert {alertMessage} />
 
 <div class="container">
   <h2>User Management</h2>

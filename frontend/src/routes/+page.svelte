@@ -1,15 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import axios from "axios";
-  import { isLoggedIn } from '$lib/stores/states';
-  import { onMount } from 'svelte';
 
   let username : string | null;
   let password : string | null;
   let loading : boolean = false;
   let errorMessage : string | null;
-
-  onMount(()=>{isLoggedIn.set(false);})
+  let isLoggedIn : boolean = false;
 
   async function login() {
     loading = true; // Set loading state
@@ -28,7 +25,7 @@
       console.log(response);
 
       if (response.status === 200) {
-        isLoggedIn.set(true);
+        isLoggedIn = true;
         goto('/applist'); // Redirect on success
       } 
     } catch (error: any) {

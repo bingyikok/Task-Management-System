@@ -2,14 +2,18 @@
     import { page } from '$app/stores';
     import { onMount } from 'svelte';
     import { goto } from "$app/navigation";
-    import { isLoggedIn } from '$lib/stores/states.ts';
+    import { isLoggedIn } from '$lib/stores/states';
 
     $: isLoggedIn.set($page.data.isActive)
 
   onMount(() => {
-    if (!$isLoggedIn) {
-      goto('/unauthorised');
-  }
+    if ($page.data.status === 403) {
+      const message : string = encodeURIComponent("unauthorised");
+      goto(`/unauthorised?${message}`);
+    } else if (!$isLoggedIn) {
+      const message : string = encodeURIComponent("account_disabled");
+      goto(`/unauthorised?${message}`);
+    }
   })
 
   let apps = [

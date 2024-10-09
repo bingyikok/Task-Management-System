@@ -1,7 +1,6 @@
 <script lang="ts">
   import { fly } from 'svelte/transition';
 
-  // export let showAlert: boolean = false;
   export let alertMessage: string = null;
 
   $: if (alertMessage) {

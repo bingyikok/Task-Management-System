@@ -14,7 +14,11 @@ export const load: PageLoad = async () => {
           isAdmin: response.data.isAdmin,
           status: 200
         };
-    } catch (error: any) {
-        return;
+    } catch (error) {
+        const status = error.response?.status;
+
+        return {
+          status,
+        };
     }
 };

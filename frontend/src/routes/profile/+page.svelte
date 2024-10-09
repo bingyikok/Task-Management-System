@@ -4,21 +4,25 @@
     import { onMount } from 'svelte';
     import { goto } from "$app/navigation";
     import { isLoggedIn } from '$lib/stores/states';
-    import Error from '$lib/components/Error.svelte'
+    import Alert from '$lib/components/Alert.svelte'
 
   let username: string = $page.data.username || 'Loading...';
   let email: string = $page.data.email;
-  let newCredentials = { username: username, email: '', password: '', change: '' };
+  let newCredentials : { [key: string]: string } = { username: username, email: '', password: '', change: '' };
   let emailError: string = null;
   let passwordError: string = null;
   let alertMessage: string = null;
 
-  $: isLoggedIn.set($page.data.isActive)
+  $: isLoggedIn.set($page.data.isActive);
 
   onMount(() => {
-    if (!$isLoggedIn || $page.data.status === 403) {
-      goto('/unauthorised');
-  }
+    if ($page.data.status === 403) {
+    const message : string = encodeURIComponent("unauthorised");
+      goto(`/unauthorised?${message}`);
+    } else if (!$isLoggedIn) {
+      const message : string = encodeURIComponent("account_disabled");
+      goto(`/unauthorised?${message}`);
+    }
   })
 
   async function changeCredentials(state: string) {
@@ -70,7 +74,7 @@ function triggerAlert(message: string) {
 
 </script>
 
-<Error {alertMessage} />
+<Alert {alertMessage} />
 
 <div class="container">
   <div class="info-group">

@@ -1,7 +1,7 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from "$app/navigation";
-    import { isLoggedIn } from '$lib/stores/states.ts';
+    import { isLoggedIn } from '$lib/stores/states';
     import axios from 'axios';
 
     onMount(async () => {

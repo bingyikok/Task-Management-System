@@ -40,7 +40,7 @@ exports.login = async (req, res) => {
       password,
       existingUserAccount[0].password
     );
-    console.log(username)
+
     // If login is successful
     if (password === existingUserAccount[0].password || isMatch) {
       const token = jwt.sign(

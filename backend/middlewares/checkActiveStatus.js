@@ -14,18 +14,11 @@ exports.checkActiveStatus = async (req, res, next) => {
       return res.status(403).json({
         success: false,
         message: "Error: Account disabled",
-        fields: {
-          username: "Error: Account disabled",
-          password: "Error: Account disabled",
-          email: "Error: Account disabled",
-          isActive: "Error: Account disabled",
-          groupname: "Error: Account disabled",
-        },
       });
     }
     next();
   } catch (error) {
-    console.log(`Error while loading session of ${username}:`, error);
+    console.error(`Error while loading session of ${username}:`, error);
     res
       .status(500)
       .send(`An error occurred while loading session of ${username}'s.`);

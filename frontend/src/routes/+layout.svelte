@@ -17,7 +17,6 @@
 </div>
 
 <style>
-  /* Layout specific styles (optional) */
   div {
     padding: 0;
     margin: 0;

@@ -3,15 +3,13 @@ require("dotenv").config({ path: "./config/config.env" });
 
 exports.verifyToken = (req, res, next) => {
   const token = req.cookies.token; //Get token from cookies
-  const ipAddress =
-    req.ip || req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+  const ipAddress = req.ip;
   const browserInfo = req.headers["user-agent"];
-
-  // console.log("cookies.token: ", req.cookies.token);
+  
   if (!token) {
-    return res.status(403).json({
+    return res.status(401).json({
       success: false,
-      message: "No token access.",
+      message: "No token access",
     });
   } else
     try {
@@ -24,7 +22,6 @@ exports.verifyToken = (req, res, next) => {
       next(); //Proceed to route handler
     } catch (error) {
       res.clearCookie("token");
-      // res.redirect("/");
       console.error("Invalid/expired token: ", error);
 
       return res.status(401).json({

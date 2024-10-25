@@ -17,7 +17,8 @@
   let newPassword : string = '';
   let loading : boolean = false;
   let originalGroup: string[] = [];
-  let alertMessage: string | null;
+  let alertMessage: string = '';
+  let alertColour : string = '';
 
   $: isLoggedIn.set($page.data.isActive);
   $: isAdmin.set($page.data.isAdmin);
@@ -25,14 +26,14 @@
   onMount(async () => {
     loading = true;
 
-    if ($page.data.status === 403) {
+    if ($page.data.status === 401) {
     const message : string = encodeURIComponent("unauthorised");
+      window.location.href = `/unauthorised?${message}`;
+    } else if (!$isLoggedIn) {
+      const message : string = encodeURIComponent("account_disabled");
       goto(`/unauthorised?${message}`);
     } else if (!$isAdmin) {
     const message : string = encodeURIComponent("not_admin");
-      goto(`/unauthorised?${message}`);
-    } else if (!$isLoggedIn) {
-      const message : string = encodeURIComponent("account_disabled");
       goto(`/unauthorised?${message}`);
     }
 
@@ -56,15 +57,17 @@
         groupSelect = responseGroups.data;
       }
     } catch (error: any) {
-      addError = error.response.data.fields || 'An unexpected error occurred.';
+      return error.response.message || 'An unexpected error occurred.';
     } finally {
       loading = false; // Reset loading state
     }
   });
 
-  function triggerAlert(message: string) {
-    alertMessage = null; // Need to have a state change in prop
+  function triggerAlert(message: string, colour: string) {
+    alertMessage = ''; // Need to have a state change in prop
+    alertColour = '';
     alertMessage = message;
+    alertColour = colour;
   }
 
   function resetAdd() {
@@ -78,7 +81,6 @@
   }
 
   async function addUser() {
-    // console.log(addUser, addUser.groupname)
     try {
       const response = await axios.post('http://localhost:3000/create', newUser, {
         headers: { 'Content-Type': 'application/json' },
@@ -87,15 +89,16 @@
 
       if (response.status === 200) {
         users = [{ ...newUser }, ...users];
-        triggerAlert("New user added sucessfully");
+        triggerAlert("New user added sucessfully", "green");
         resetAdd();
       }
     } catch (error: any) {
-      addError = error.response.data.fields || 'An unexpected error occurred.';
-      console.log(addError);
-
-      if (error.response.status === 403) {
-        location.reload();
+      if (error.response.status === 403 || error.response.status === 401) {
+        triggerAlert(error.response.data.message, "red");
+        setTimeout(()=>location.reload(), 1000);
+      } else {
+        console.log(error.response.data)
+        addError = error.response.data.fields || 'An unexpected error occurred.';
       }
     } finally {
       resetUpdate();
@@ -106,7 +109,6 @@
   async function saveUser(index: number) {
     let updateUser : any = users[index];
     updateUser = { ...updateUser, password: newPassword };
-    // console.log(updateUser);
 
     try {
       const response = await axios.post('http://localhost:3000/update', updateUser, {
@@ -116,14 +118,15 @@
 
       if (response.status === 200) {
         resetUpdate();
-        triggerAlert("User updated sucessfully");
+        triggerAlert("User updated sucessfully", "green");
         editingIndex = null;
       }
     } catch (error: any) {
-      updateError = error.response.data.fields || 'An unexpected error occurred.';
-      console.log(addError);
-      if (error.response.status === 403) {
-        location.reload();
+      if (error.response.status === 403 || error.response.status === 401) {
+        triggerAlert(error.response.data.message, "red");
+        setTimeout(()=>location.reload(), 1000);
+      } else {
+        updateError = error.response.data.fields || 'An unexpected error occurred.';
       }
     } finally {
       resetAdd();
@@ -154,13 +157,14 @@
       if (response.status === 200) {
         groupSelect = [newGroup, ...groupSelect];
         resetAdd();
-        triggerAlert("New group created sucessfully");
+        triggerAlert("New group created sucessfully", "green");
       }
     } catch (error: any) {
-      addError.groupname = error.response?.data?.message || 'An unexpected error occurred.';
-
-      if (error.response.status === 403) {
-        location.reload();
+      if (error.response.status === 403 || error.response.status === 401) {
+        triggerAlert(error.response.data.message, "red");
+        setTimeout(()=>location.reload(), 1000);
+      } else {
+        addError.groupname = error.response.data.message || 'An unexpected error occurred.';
       }
     } finally {
       newGroup = '';
@@ -173,7 +177,7 @@
   }
 </script>
 
-<Alert {alertMessage} />
+<Alert alertMessage={alertMessage} bgColor={alertColour}/>
 
 <div class="container">
   <h2>User Management</h2>

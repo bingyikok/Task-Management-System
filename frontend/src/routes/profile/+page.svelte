@@ -16,7 +16,7 @@
   $: isLoggedIn.set($page.data.isActive);
 
   onMount(() => {
-    if ($page.data.status === 403) {
+    if ($page.data.status === 401) {
     const message : string = encodeURIComponent("unauthorised");
       goto(`/unauthorised?${message}`);
     } else if (!$isLoggedIn) {

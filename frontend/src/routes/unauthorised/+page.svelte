@@ -2,7 +2,7 @@
     import { onMount } from 'svelte';
     import { isLoggedIn } from '$lib/stores/states';
 
-    // Set the logged-in state to false when the user is unauthorized
+    // To render navbar
     $: isLoggedIn.set(true);
     let message : string = "";
 
@@ -19,7 +19,7 @@
       }
 
       if(state === "?not_admin") {
-        message = "You are no longer an admin."
+        message = "You are not an admin."
       }
     });
 </script>

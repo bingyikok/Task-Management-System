@@ -1,0 +1,26 @@
+test_case,username,password,task_state,task_app_acronym,expected_code
+iam_username_wrong_type,12345,admin123!,doing,zoo,C001
+iam_missing_username,,admin123!,doing,zoo,C001
+iam_username_empty_string,"",admin123!,doing,zoo,C001
+iam_pw_wrong_type,PL1,12345,doing,zoo,C001
+iam_missing_pw,PL1,,doing,zoo,C001
+iam_pw_empty_string,PL1,"",doing,zoo,C001
+iam_usename_too_long,"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ae",admin123!,doing,zoo,C001
+iam_pw_too_long,PL1,"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ae",doing,zoo,C001
+iam_invalid_credentials,PL1,wrongpassword,doing,zoo,C001
+txn_missing_task_state,PL1,admin123!,,zoo,D001
+txn_task_state_empty_string,PL1,admin123!,"",zoo,D001
+txn_missing_acronym,PL1,admin123!,doing,,D001
+txn_state_DNE,PL1,admin123!,dne,zoo,D001
+txn_missing_acronym,PL1,admin123!,doing,,D001
+txn_acronym_empty_string,PL1,admin123!,doing,"""",D001
+txn_acronym_DNE,PL1,admin123!,doing,this should not exist,D001
+txn_state_too_long,PL1,admin123!,"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ae",zoo,D001
+txn_acronym_too_long,PL1,admin123!,doing,"Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Ae",D001
+txn_state_wrong_type,PL1,admin123!,12345,zoo,D001
+txn_acronym_wrong_type,PL1,admin123!,doing,12345,D001
+iam_username_allcaps,PL1,admin123!,doing,zoo,S000
+txn_capitalised_state,PL1,admin123!,DOING,zoo,S000
+txn_lowercase_state,PL1,admin123!,doing,zoo,S000
+txn_camelcase_state,PL1,admin123!,Open,zoo,S000
+pass_gettaskbystate,PL1,admin123!,doing,zoo,S000

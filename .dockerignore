@@ -1,0 +1,17 @@
+**/node_modules
+.gitignore
+.git
+Dockerfile
+axios
+middlewares
+scripts
+.vscode
+extracted
+*.tar
+*.sh
+
+controllers/apps.js
+controllers/authController.js
+controllers/plans.js
+controllers/tasks.js
+controllers/usermanagement.js

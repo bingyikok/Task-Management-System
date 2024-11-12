@@ -1,5 +1,6 @@
 const connection = require("../config/database");
 const bcrypt = require("bcryptjs");
+const nodemailer = require("../config/nodemailer");
 
 exports.createTask = async (req, res) => {
      const isValidURL = /^[a-zA-Z0-9]+$/.test(req.url.slice(1));
@@ -65,12 +66,12 @@ exports.createTask = async (req, res) => {
      const transaction = await connection.getConnection();
 
      try {
-          const [existingUserAccount] = await connection.query(
+          const [[existingUserAccount]] = await connection.query(
                queryExistingUserAccount,
                [username]
           );
 
-          if (existingUserAccount.length === 0 || existingUserAccount[0].isActive !== 1) {
+          if (!existingUserAccount || existingUserAccount.isActive !== 1) {
                //Username does not exist or disabled
                return res.json({
                     code: "C001",
@@ -78,7 +79,7 @@ exports.createTask = async (req, res) => {
           } else {
                const isMatch = await bcrypt.compare(
                     password,
-                    existingUserAccount[0].password
+                    existingUserAccount.password
                );
                if (!isMatch) {
                     //PW wrong
@@ -97,10 +98,6 @@ exports.createTask = async (req, res) => {
                          code: "D001",
                     });
                }
-
-
-
-               
 
                const queryAppInfo =
                     "SELECT app_permit_create, app_rnumber FROM application WHERE app_acronym = ?";
@@ -145,7 +142,7 @@ exports.createTask = async (req, res) => {
                });
 
                const isValidOptionalKey = optionalKeys.every((key) => {
-                    req.body[key] = req.body[key] ?? "" 
+                    req.body[key] = req.body[key] ?? "";
                     const value = req.body[key];
 
                     if (key === "task_description") {
@@ -172,12 +169,6 @@ exports.createTask = async (req, res) => {
                          code: "D001",
                     });
                }
-
-               // if (!isValidMandatoryKey || !isValidOptionalKey) { //Invalid data type/number of char or cannot be null
-               //     return res.json({
-               //       'code': 'D001',
-               //     });
-               // }
 
                const queryExistingPlan =
                     "SELECT COUNT(*) AS count FROM plan WHERE plan_mvp_name = ? AND plan_app_acronym = ?";
@@ -240,7 +231,7 @@ exports.createTask = async (req, res) => {
                          });
                     }
                     await transaction.commit();
-               
+
                     return res.json({
                          task_id: task_id,
                          code: "S000",
@@ -326,7 +317,7 @@ exports.gettaskbystate = async (req, res) => {
                [username]
           );
 
-          if (!existingUserAccount || existingUserAccount[0].isActive !== 1) {
+          if (!existingUserAccount || existingUserAccount.isActive !== 1) {
                //Username does not exist or disabled
                return res.json({
                     code: "C001",
@@ -409,6 +400,7 @@ exports.gettaskbystate = async (req, res) => {
 
 exports.promotetask2done = async (req, res) => {
      const isValidURL = /^[a-zA-Z0-9]+$/.test(req.url.slice(1));
+
      const isJSON =
           req.headers["content-type"]?.endsWith("json") ||
           req.is("application/json");
@@ -479,7 +471,7 @@ exports.promotetask2done = async (req, res) => {
                [username]
           );
 
-          if (!existingUserAccount || existingUserAccount[0].isActive !== 1) {
+          if (!existingUserAccount || existingUserAccount.isActive !== 1) {
                //Username does not exist or disabled
                return res.json({
                     code: "C001",
@@ -496,6 +488,28 @@ exports.promotetask2done = async (req, res) => {
                     });
                }
           }
+
+          //ADD DEV PERMIT here
+          const app_acronym = task_id.split("_")[0];
+          const queryAppInfo =
+               "SELECT app_permit_doing, app_permit_done FROM application WHERE app_acronym = ?";
+          const [[appInfo]] = await connection.query(queryAppInfo, [
+               app_acronym,
+          ]);
+          const queryCheckGroup =
+               "SELECT COUNT(*) AS count FROM user_groups WHERE username = ? AND groupname = ?";
+          const [[checkGroup]] = await connection.query(queryCheckGroup, [
+               username,
+               appInfo.app_permit_doing,
+          ]);
+
+          if (checkGroup.count === 0) {
+               return res.json({
+                    //User don't have app_permit_doing
+                    code: "C003",
+               });
+          }
+
           const [[existingTaskState]] = await connection.query(
                queryExistingTaskState,
                [task_id]
@@ -524,6 +538,8 @@ exports.promotetask2done = async (req, res) => {
                          code: "D001",
                     });
                } else {
+                    await nodemailer.sendMail(appInfo.app_permit_done, task_id);
+
                     return res.json({
                          //success
                          code: "S000",

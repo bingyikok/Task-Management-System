@@ -68,6 +68,7 @@ async function createTask() {
         dispatch('saved', { message: "Task successfully created", colour: "green", remainOpen: true });
         };
     } catch (error) {
+        // console.log(error);
         if (error.response.status === 403 || 400) {
                 dispatch("error", { message: error.response.data.message, colour: "red", remainOpen: true });
             } else {

@@ -18,6 +18,6 @@ app.use(express.json()); //Parse JSON bodies (as sent by API clients)
 app.use("/", require("./routes/routes"));
 
 //App Listener
-app.listen(3000, () => {
+app.listen(process.env.PORT, () => {
   console.log("Server started");
 });
